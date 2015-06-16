@@ -11,6 +11,9 @@ colorful stone for tecstack.
 * Test with Nose and tox
 * Build with Travis-ci
 
+## Editor
+
+python jedi
 
 ## Refs
 

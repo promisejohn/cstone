@@ -63,3 +63,5 @@ target/
 
 # tmp data for testing
 .data
+# flask instance folder
+instance
