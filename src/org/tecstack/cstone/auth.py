@@ -3,6 +3,8 @@ from flask import Flask, request, abort, url_for, jsonify, g
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
+from itsdangerous import TimedJSONWebSignatureSerializer \
+                as Serializer, BadSignature, SignatureExpired
 
 
 app = Flask(__name__, instance_relative_config=True)
@@ -27,13 +29,44 @@ class User(db.Model):
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
 
+    def generate_auth_token(self, expiration=600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id':self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired as e:
+            return None
+        except BadSignature as e:
+            return None
+        user = User.query.get(data['id'])
+        return user
+
 @auth.verify_password
-def verify_password(username, password):
-    user = User.query.filter_by(username = username).first()
-    if not user or not user.verify_password(password):
-        return False
+def verify_password(username_or_token, password):
+    # first try auth with token
+    user = User.verify_auth_token(username_or_token)
+    if not user:
+        # try auth with username/password
+        user = User.query.filter_by(username = username_or_token).first()
+        if not user or not user.verify_password(password):
+            return False
     g.user = user
     return True
+
+@app.route('/auth/api/v1.0/token')
+@auth.login_required
+def get_auth_token():
+    '''
+    Play around:
+        curl -u promise:pass -i http://127.0.0.1:8000/auth/api/v1.0/token
+        curl -u ${token}:unused -i http://127.0.0.1:8000/auth/api/v1.0/token
+    '''
+    token = g.user.generate_auth_token()
+    return jsonify({'token':token.decode('ascii')})
 
 @app.route('/auth/api/v1.0/resource')
 @auth.login_required

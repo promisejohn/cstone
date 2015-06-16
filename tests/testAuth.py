@@ -36,3 +36,11 @@ class TestAuth():
         assert_equal(200, resp.status_code)
         data = json.loads(resp.data)
         assert_equal('test username', data['username'])
+
+    @with_setup(setup, teardown)
+    def test_get_resource(self):
+        pass
+
+    @with_setup(setup, teardown)
+    def test_get_token(self):
+        pass
