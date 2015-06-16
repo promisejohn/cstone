@@ -1,5 +1,5 @@
 
-from flask import Flask, request, abort, url_for, jsonify
+from flask import Flask, request, abort, url_for, jsonify, g
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
@@ -26,6 +26,23 @@ class User(db.Model):
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
+
+@auth.verify_password
+def verify_password(username, password):
+    user = User.query.filter_by(username = username).first()
+    if not user or not user.verify_password(password):
+        return False
+    g.user = user
+    return True
+
+@app.route('/auth/api/v1.0/resource')
+@auth.login_required
+def get_resource():
+    '''
+    Play around:
+        curl -u promise:pass -i http://127.0.0.1:8000/auth/api/v1.0/resource
+    '''
+    return jsonify({'data':'Hello %s!' % g.user.username})
 
 @app.route('/auth/api/v1.0/users', methods=['POST'])
 def new_user():

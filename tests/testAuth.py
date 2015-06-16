@@ -15,7 +15,7 @@ class TestAuth():
     def teardown(self):
         db.drop_all()
 
-    @with_setup(setup,teardown)
+    @with_setup(setup, teardown)
     def test_new_user(self):
         data = json.dumps(dict(username='test username',
                     password ='pass'))
@@ -28,3 +28,11 @@ class TestAuth():
         assert_equal('test username', username)
         assert_equal('http://localhost/auth/api/v1.0/users/1',
                     resp.headers['Location'])
+
+    @with_setup(setup, teardown)
+    def test_get_user(self):
+        self.test_new_user()
+        resp = self.tester.get('/auth/api/v1.0/users/1')
+        assert_equal(200, resp.status_code)
+        data = json.loads(resp.data)
+        assert_equal('test username', data['username'])
