@@ -35,7 +35,18 @@ TBD.
 
 ## Authentication
 
-TBD.
+/auth/api/v1.0/oauth/authorize/facebook
+/auth/api/v1.0/oauth/callback/facebook
+
+### OAuth
+
+Flow:
+* users grant permission to this site on the provider
+* visit home of this site
+* redirect to oauth provider's authorization URL
+* login@provider
+* provider redirect back to callback of this site with auth code
+* this site uses the auth code to get user information on provider for reg and login.
 
 Ref:
 
